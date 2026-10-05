@@ -1,0 +1,82 @@
+spring:
+  application:
+    name: study-planner
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/studyplanner}
+    username: ${DB_USER:studyplanner}
+    # Echtes Passwort nur in der .env (DB_PASSWORD) – hier steht nur der lokale Standardwert
+    password: ${DB_PASSWORD:studyplanner}
+  jpa:
+    # Das Schema wird ausschließlich von Flyway verwaltet (src/main/resources/db/migration)
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+  # Mailserver für Bestätigungsmails und "Passwort vergessen".
+  # Standard: Mailpit (Test-Postfach aus docker-compose.yml, Weboberfläche http://localhost:8025).
+  # Für echte Zustellung in der .env einen echten SMTP-Server eintragen (siehe .env.example).
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      "[mail.smtp.auth]": ${MAIL_SMTP_AUTH:false}
+      "[mail.smtp.starttls.enable]": ${MAIL_STARTTLS:false}
+      # Nicht ewig warten, wenn der Mailserver nicht antwortet (Millisekunden)
+      "[mail.smtp.connectiontimeout]": 5000
+      "[mail.smtp.timeout]": 10000
+      "[mail.smtp.writetimeout]": 10000
+
+server:
+  port: ${PORT:8080}
+
+# Healthcheck für Docker Compose: nur /actuator/health, ohne Details. nginx leitet /actuator nicht nach außen weiter.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+  health:
+    # Ein nicht erreichbarer Mailserver soll das Backend nicht als "krank" markieren
+    mail:
+      enabled: false
+
+app:
+  jwt:
+    # Mindestens 32 Zeichen. Leer = zufälliger Schlüssel bei jedem Start (siehe SecurityConfig).
+    # Öffentlich bekannte Platzhalter werden abgelehnt.
+    secret: ${JWT_SECRET:}
+    # Lebensdauer des Access-Tokens. Bewusst kurz: Das Frontend holt sich mit dem Refresh-Token
+    # (httpOnly-Cookie) automatisch ein neues, sobald es abgelaufen ist.
+    expiration-minutes: ${JWT_EXPIRATION_MINUTES:15}
+  auth:
+    # So lange bleibt man angemeldet, ohne das Passwort erneut einzugeben (Lebensdauer des Refresh-Tokens)
+    refresh-token-days: ${REFRESH_TOKEN_DAYS:30}
+    # Cookie nur über HTTPS senden. Lokal (http://localhost) false, auf einem Server mit HTTPS true setzen!
+    cookie-secure: ${AUTH_COOKIE_SECURE:false}
+    # Wird ein gerade ersetztes Refresh-Token innerhalb dieser Zeit erneut benutzt (zwei Tabs gleichzeitig),
+    # gilt das nicht als Diebstahl. Danach werden bei Wiederverwendung alle Sitzungen des Kontos beendet.
+    refresh-reuse-grace-seconds: ${REFRESH_REUSE_GRACE_SECONDS:60}
+  # Legt beim Start einen Demo-Account mit Beispieldaten an (demo@studyplanner.de / demo1234).
+  # Die Kontodaten des Demo-Accounts sind gesperrt; die Beispieldaten werden jede Nacht zurückgesetzt.
+  demo-data: ${APP_DEMO_DATA:false}
+  demo-reset-cron: ${APP_DEMO_RESET_CRON:0 0 4 * * *}
+  # Nächtliches Aufräumen: unbestätigte Konten nach X Tagen löschen, abgelaufene Tokens entfernen
+  cleanup:
+    cron: ${APP_CLEANUP_CRON:0 30 3 * * *}
+    unverified-account-days: ${APP_UNVERIFIED_ACCOUNT_DAYS:7}
+  # Adresse des Frontends – daraus werden die Links in den E-Mails gebaut (Bestätigung, Passwort zurücksetzen)
+  frontend-url: ${APP_FRONTEND_URL:http://localhost:5173}
+  mail:
+    # Absender der E-Mails. Bei Gmail & Co. muss das die Adresse des SMTP-Kontos sein.
+    from: ${MAIL_FROM:Study Planner <no-reply@studyplanner.local>}
+    # Mails erst nach erfolgreichem Speichern und im Hintergrund versenden (ein langsamer Mailserver bremst nichts)
+    async: true
+  login:
+    # Schutz gegen Passwort-Raten: nach so vielen Fehlversuchen wird die E-Mail-Adresse gesperrt ...
+    max-attempts: ${LOGIN_MAX_ATTEMPTS:5}
+    # ... und zwar für so viele Minuten
+    lock-minutes: ${LOGIN_LOCK_MINUTES:5}

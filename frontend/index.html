@@ -1,0 +1,20 @@
+<!doctype html>
+<!--
+  Einzige HTML-Seite der App (Single-Page-App). Sie ist fast leer:
+  React füllt das <div id="root"> mit der kompletten Oberfläche (siehe src/main.tsx).
+  Seitenwechsel passieren im Browser per React Router, ohne diese Datei neu zu laden.
+-->
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Study Planner – Vorlesungen, Klausuren, Aufgaben und Lernfortschritt an einem Ort" />
+    <title>Study Planner</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <!-- Einstiegspunkt der App; Vite ersetzt das beim Build durch die gebündelte JS-Datei -->
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

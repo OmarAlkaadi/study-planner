@@ -1,0 +1,17 @@
+# Einstellungen für die Tests. Die Datenbank (echtes PostgreSQL) startet TestcontainersConfig –
+# Flyway legt das Schema aus allen Migrationen (V1, V2, ...) an.
+
+app:
+  jwt:
+    secret: test-secret-mindestens-32-zeichen-lang-1234567890
+  demo-data: false
+  # In den Tests wird kein echter Mailserver benutzt: IntegrationTestBase ersetzt den JavaMailSender
+  # durch ein Mockito-Objekt und liest die Links direkt aus den "verschickten" Mails.
+  frontend-url: http://localhost:3000
+  mail:
+    # Synchron senden (direkt nach dem Speichern), damit die Tests die Mail sofort auslesen können
+    async: false
+  auth:
+    # 0 = jede Wiederverwendung eines ersetzten Refresh-Tokens gilt sofort als Diebstahl
+    # (die Kulanzzeit für parallele Tabs testet RefreshTokenGraceIntegrationTest separat)
+    refresh-reuse-grace-seconds: 0

@@ -1,0 +1,33 @@
+# ---------- Geheimnisse ----------
+# Echte Zugangsdaten nie committen. Die Vorlage .env.example (nur Platzhalter) gehört dagegen ins
+# Repository – ohne sie funktioniert der Schnellstart aus der README nicht.
+.env
+.env.*
+!.env.example
+
+# ---------- Private Notizen ----------
+CHANGELOG.md
+Hinweise.md
+LICENSE
+# ---------- Datenbank-Sicherungen (persönliche Daten und Passwort-Hashes) ----------
+backups/
+*.sql
+!backend/src/main/resources/db/migration/*.sql
+
+# ---------- Build-Ergebnisse und Abhängigkeiten ----------
+backend/target/
+frontend/node_modules/
+frontend/dist/
+frontend/coverage/
+node_modules/
+
+# ---------- Logs ----------
+*.log
+
+# ---------- IDEs und Betriebssystem ----------
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+desktop.ini

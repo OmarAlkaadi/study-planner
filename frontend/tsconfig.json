@@ -1,0 +1,12 @@
+// Haupt-Konfiguration für TypeScript. Enthält selbst keine Dateien, sondern verweist auf zwei Teile:
+// - tsconfig.app.json:  der App-Code im Ordner src (läuft im Browser)
+// - tsconfig.node.json: vite.config.ts (läuft in Node.js)
+// npm run build prüft beide mit "tsc -b", bevor Vite baut.
+
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
+}

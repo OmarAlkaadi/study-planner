@@ -1,0 +1,88 @@
+# Startet die komplette Anwendung:  docker compose up --build
+# Danach im Browser öffnen:           http://localhost:3000
+# E-Mails der App (Test-Postfach):    http://localhost:8025
+#
+# Alle Ports sind nur auf dem eigenen Rechner erreichbar (127.0.0.1 und ::1), nicht im WLAN/Netzwerk.
+# Die IPv6-Zeilen sind nötig, weil Programme, die "localhost" benutzen (z. B. pgAdmin), zuerst ::1 versuchen
+# und unter Windows sonst 2 Sekunden auf die Ablehnung warten.
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: studyplanner
+      POSTGRES_USER: ${DB_USER:-studyplanner}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-studyplanner}
+    ports:
+      - "127.0.0.1:5432:5432"
+      - "[::1]:5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/studyplanner
+      DB_USER: ${DB_USER:-studyplanner}
+      DB_PASSWORD: ${DB_PASSWORD:-studyplanner}
+      # Leer = zufälliger Schlüssel bei jedem Start; öffentlich bekannte Platzhalter lehnt das Backend ab
+      JWT_SECRET: ${JWT_SECRET:-}
+      # Login: kurzlebiges Access-Token (Minuten) + Refresh-Token im httpOnly-Cookie (Tage)
+      JWT_EXPIRATION_MINUTES: ${JWT_EXPIRATION_MINUTES:-15}
+      REFRESH_TOKEN_DAYS: ${REFRESH_TOKEN_DAYS:-30}
+      AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-false}
+      APP_DEMO_DATA: ${APP_DEMO_DATA:-true}
+      # Adresse des Frontends – daraus entstehen die Links in den E-Mails
+      APP_FRONTEND_URL: ${APP_FRONTEND_URL:-http://localhost:3000}
+      # Mailserver: standardmäßig Mailpit (unten), für echte Zustellung in der .env überschreiben
+      MAIL_HOST: ${MAIL_HOST:-mailpit}
+      MAIL_PORT: ${MAIL_PORT:-1025}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_SMTP_AUTH: ${MAIL_SMTP_AUTH:-false}
+      MAIL_STARTTLS: ${MAIL_STARTTLS:-false}
+      MAIL_FROM: ${MAIL_FROM:-Study Planner <no-reply@studyplanner.local>}
+    ports:
+      - "127.0.0.1:8080:8080"
+      - "[::1]:8080:8080"
+    # "Gesund" erst, wenn Spring Boot gestartet ist und die Datenbank erreicht (/actuator/health)
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    depends_on:
+      db:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    restart: unless-stopped
+
+  # Test-Postfach: fängt alle E-Mails der App ab, statt sie wirklich zu verschicken.
+  # Ansehen unter http://localhost:8025 (Bestätigungsmails, "Passwort vergessen").
+  mailpit:
+    image: axllent/mailpit:v1.31
+    ports:
+      - "127.0.0.1:8025:8025"
+      - "[::1]:8025:8025"
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "127.0.0.1:3000:80"
+      - "[::1]:3000:80"
+    # Erst starten, wenn das Backend bereit ist – sonst gäbe es kurz nach dem Start Fehler 502
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  db-data:

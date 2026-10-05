@@ -1,0 +1,31 @@
+// TypeScript-Einstellungen für den App-Code in src/. Es wird nur geprüft (noEmit) –
+// das eigentliche Übersetzen nach JavaScript macht Vite.
+
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "es2023",
+    "lib": ["ES2023", "DOM"],
+    "module": "esnext",
+    // Typen von Vite (z. B. für import.meta.env und CSS-Importe). Liegen in node_modules –
+    // fehlt der Ordner, meldet VS Code hier einen Fehler (Lösung: npm install bzw. npm ci).
+    "types": ["vite/client"],
+    "allowArbitraryExtensions": true,
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src"]
+}
